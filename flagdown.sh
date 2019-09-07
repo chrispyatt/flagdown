@@ -10,12 +10,21 @@ if (($# == 0)); then echo "No options provided. Use -h for help."; exit 1; fi
 
 # Install python dependencies (only needs doing once - comment out once installed).
 echo "Installing python dependencies if necessary."
-pip install pyfaidx
-pip install biopython
-pip install Pillow
+#pip install pyfaidx
+#pip install biopython
+#pip install Pillow
 
 # Check hmmer installation.
-hash nhmmer 2>/dev/null || { echo >&2 "Requirement: HMMER doesn't appear to be installed. Make sure it's added to your PATH.  Aborting."; exit 1; }
+#hash nhmmer 2>/dev/null || { echo >&2 "Requirement: HMMER doesn't appear to be installed. Make sure it's added to your PATH.  Aborting."; exit 1; }
+
+# Edit the env variables below to point to where you have installed DETECT2 and emboss
+DETECT_FOLDER=$HOME/Programs/DETECTv2
+EMBOSS_FOLDER=$HOME/Programs/emboss
+
+DETECT_TOOL=${DETECT_FOLDER}/detect.py
+
+export PATH=${DETECT_FOLDER}/:$PATH # add the path to the folder containing DETECT
+export PATH=${EMBOSS_FOLDER}/bin:$PATH # add the path to emboss to PATH
 
 
 while getopts ":g:a:o:i:he" opt; do
@@ -92,6 +101,11 @@ python runHMMERsearch.py $output $assemblies $alignments
 
 echo ""
 echo "Getting top hit FASTA files for matching sequences."
+
+# run detect on proteins file to identify enzymes according to EC classification
+python $DETECT_TOOL NCYC1646_allProteins.fasta --verbose --output_file NCYC1646.out --top_predictions_file NCYC1646.top --num_threads 8 --fbeta_file NCYC1646.f1.out --beta 1
+
+
 
 for assembly in $assemblies; do
     strain=$(basename -- "$assembly")
